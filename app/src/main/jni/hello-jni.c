@@ -75,7 +75,7 @@ JNIEXPORT void JNICALL Java_com_jniexample_MainActivity_helloWorld
     jint test[10];
     int i = 0;
     for (i = 0; i < 10; ++i) {
-        *(test + i) = i + 100;
+        test[i] = i + 100;
     }
     (*env)->SetIntArrayRegion(env, testIntArray, 0, 10, &test);
     (*env)->CallVoidMethod(env, this, int_array_only, testIntArray);
@@ -122,4 +122,9 @@ JNIEXPORT void JNICALL Java_com_jniexample_MainActivity_helloWorld
 
     char *haha_array = (*env)->GetStringUTFChars(env, tag_string, NULL);
     debug("tag is %s", haha_array);
+}
+
+JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
+
+    return JNI_VERSION_1_6;
 }
