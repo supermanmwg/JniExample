@@ -130,4 +130,5 @@ JNIEXPORT void JNICALL Java_com_example_weiguangmeng_activitytest_MainActivity_h
     char *haha_array = (*env)->GetStringUTFChars(env, tag_string, NULL);
     debug("tag is %s", haha_array);
 
+    
 }
