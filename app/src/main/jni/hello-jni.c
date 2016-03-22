@@ -1,24 +1,8 @@
-/*
- * Copyright (C) 2009 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
 #include <string.h>
 #include <jni.h>
 #include <stdio.h>
 #include <android/log.h>
-#include "com_example_weiguangmeng_activitytest_MainActivity.h"
+#include "com_jniexample_MainActivity.h"
 
 #define DEBUG_BUILD
 #ifdef DEBUG_BUILD
@@ -27,10 +11,16 @@
 #define debug(fmt, ...)
 #endif
 
-JNIEXPORT void JNICALL Java_com_example_weiguangmeng_activitytest_MainActivity_helloWorld
+static char package_path[] = "com/jniexample/";
+
+JNIEXPORT void JNICALL Java_com_jniexample_MainActivity_helloWorld
         (JNIEnv *env, jobject this, jstring string) {
 
-    jboolean is_copy;  //jboolean 是一个char typedef unsigned char   jboolean;       /* unsigned 8 bits */
+    /**
+     * jboolean 是一个char;
+     * typedef unsigned char jboolean;
+     **/
+    jboolean is_copy;
     //jstring 转化成 char*
     char *utf_string = (*env)->GetStringUTFChars(env, string, &is_copy);
     debug("hello from %s", utf_string);
@@ -40,6 +30,7 @@ JNIEXPORT void JNICALL Java_com_example_weiguangmeng_activitytest_MainActivity_h
         debug("is not copied");
     }
 
+    //使用完别忘了释放
     (*env)->ReleaseStringUTFChars(env, string, utf_string);
 
     if (NULL == utf_string) {
@@ -53,21 +44,21 @@ JNIEXPORT void JNICALL Java_com_example_weiguangmeng_activitytest_MainActivity_h
 
     //this就是MainActivity的一个实例化的对象,通过this获得MainActivity的class，再通过反射调用MainActivity的静态方法test（）
     jclass clazz = (*env)->GetObjectClass(env, this);
-    jmethodID id_test = (*env)->GetStaticMethodID(env, clazz, "test", "()V");
+    jmethodID id_test = (*env)->GetStaticMethodID(env, clazz, "test", "()V");  //静态方法
     (*env)->CallStaticVoidMethod(env, clazz, id_test);
 
-    jmethodID id_haha = (*env)->GetMethodID(env, clazz, "haha", "(Ljava/lang/String;)V");
-
+    jmethodID id_haha = (*env)->GetMethodID(env, clazz, "haha", "(Ljava/lang/String;)V");  //普通方法
     //char* 转化成 jstring
     jstring message = (*env)->NewStringUTF(env, "mwg");
-    (*env)->CallVoidMethod(env, this, id_haha, message);
     // (*env)->CallVoidMethod(env, this, id_haha, "mwg");  //不能直接传字符串，会引起错误
+    (*env)->CallVoidMethod(env, this, id_haha, message);
+
 
     jmethodID int_test = (*env)->GetMethodID(env, clazz, "intTest",
-                                             "(ILjava/lang/String;)V");  //如果不加；也会报错
+                                             "(ILjava/lang/String;)V");  //如果不加“；”也会报错
     jint num1 = 5;
     (*env)->CallVoidMethod(env, this, int_test, num1, message);
-    (*env)->DeleteLocalRef(env,message);
+    (*env)->DeleteLocalRef(env, message);  //删除message本地引用，不然会引起内存泄露
 
     jmethodID int_only = (*env)->GetMethodID(env, clazz, "intOnly",
                                              "(I)V"); //I不能加；String 和Object必须加
@@ -101,27 +92,29 @@ JNIEXPORT void JNICALL Java_com_example_weiguangmeng_activitytest_MainActivity_h
     (*env)->DeleteLocalRef(env, string_array);
 
     //传递Student对象
-    jmethodID  student_array_only = (*env)->GetMethodID(env, clazz, "studentArrayOnly", "([Lcom/example/weiguangmeng/activitytest/utils/Student;)V");
-    jclass student_class = (*env)->FindClass(env, "com/example/weiguangmeng/activitytest/utils/Student");
-    jmethodID  student_id = (*env)->GetMethodID(env, student_class, "<init>", "(Ljava/lang/String;Ljava/lang/String;)V");
+    jmethodID student_array_only = (*env)->GetMethodID(env, clazz, "studentArrayOnly",
+                                                       "([Lcom/jniexample/utils/Student;)V");
+    jclass student_class = (*env)->FindClass(env, "com/jniexample/utils/Student");
+    jmethodID student_id = (*env)->GetMethodID(env, student_class, "<init>",
+                                               "(Ljava/lang/String;Ljava/lang/String;)V");
     jstring name = (*env)->NewStringUTF(env, "mwg");
     jstring sex = (*env)->NewStringUTF(env, "male");
     jobject student = (*env)->NewObject(env, student_class, student_id, name, sex);
     jobjectArray student_array = (*env)->NewObjectArray(env, 6, student_class, student);
-    (*env)->CallVoidMethod(env, this, student_array_only,  student_array);
-    (*env)->DeleteLocalRef(env,name);
-    (*env)->DeleteLocalRef(env,sex);
+    (*env)->CallVoidMethod(env, this, student_array_only, student_array);
+    (*env)->DeleteLocalRef(env, name);
+    (*env)->DeleteLocalRef(env, sex);
     (*env)->DeleteLocalRef(env, student);
     (*env)->DeleteLocalRef(env, student_array);
 
 
     //获得对象属性值
-    jfieldID  tag_id = (*env)->GetFieldID(env, clazz, "name", "Ljava/lang/String;");  //必须加“;”
-    jstring haha_string =(jstring) (*env)->GetObjectField(env, this, tag_id);
+    jfieldID tag_id = (*env)->GetFieldID(env, clazz, "name", "Ljava/lang/String;");  //必须加“;”
+    jstring haha_string = (jstring) (*env)->GetObjectField(env, this, tag_id);
 
     //普通属性
     char *tag_array = (*env)->GetStringUTFChars(env, haha_string, NULL);
-     debug("haha is %s", tag_array);
+    debug("haha is %s", tag_array);
 
     //静态属性，必须用以下方法，不然会报错
     jfieldID haha_id = (*env)->GetStaticFieldID(env, clazz, "TAG", "Ljava/lang/String;");
@@ -129,6 +122,4 @@ JNIEXPORT void JNICALL Java_com_example_weiguangmeng_activitytest_MainActivity_h
 
     char *haha_array = (*env)->GetStringUTFChars(env, tag_string, NULL);
     debug("tag is %s", haha_array);
-
-    
 }
